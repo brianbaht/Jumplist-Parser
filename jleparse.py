@@ -314,24 +314,23 @@ def main(argv):
 			length_rest = len(dest_list_data[start_point:])
 			if(length_rest > version_three_entry_path_offset):
 				entry_remain = True
-
 	#Loop through destlist entries
 	for destlist_entry in dest_list_entries:
-		print(destlist_entry)
-		entry = extract_dir_entry(dir_dict[str(destlist_entry["entry_id"])])
-		if(check_size(min_stream_size, entry["size"])):
-			entry_data = get_data_run(entry["sid"], sat_arr, sector_size, whole_file)
-		else:
-			entry_data = get_data_run(entry["sid"], ssat_arr, short_sector_size, whole_file, root_data)
-		lnk_dict = parse_lnk(entry_data)
-		lnk_dict["creation"] = convert_timestamp(lnk_dict["creation"]).strftime("%m/%d/%Y %H:%M:%S")
-		lnk_dict["last_access"] = convert_timestamp(lnk_dict["last_access"]).strftime("%m/%d/%Y %H:%M:%S")
-		lnk_dict["last_modify"] = convert_timestamp(lnk_dict["last_modify"]).strftime("%m/%d/%Y %H:%M:%S")
-		print("Path: " + destlist_entry["path"])
-		print("Lnk Creation: " + lnk_dict["creation"])
-		print("Lnk Last Access: " + lnk_dict["last_access"])
-		print("Lnk Last Modify: " + lnk_dict["last_modify"])
-		print()
+		if(destlist_entry["entry_id"] != 0):
+			entry = extract_dir_entry(dir_dict[str(destlist_entry["entry_id"])])
+			if(check_size(min_stream_size, entry["size"])):
+				entry_data = get_data_run(entry["sid"], sat_arr, sector_size, whole_file)
+			else:
+				entry_data = get_data_run(entry["sid"], ssat_arr, short_sector_size, whole_file, root_data)
+			lnk_dict = parse_lnk(entry_data)
+			lnk_dict["creation"] = convert_timestamp(lnk_dict["creation"]).strftime("%m/%d/%Y %H:%M:%S")
+			lnk_dict["last_access"] = convert_timestamp(lnk_dict["last_access"]).strftime("%m/%d/%Y %H:%M:%S")
+			lnk_dict["last_modify"] = convert_timestamp(lnk_dict["last_modify"]).strftime("%m/%d/%Y %H:%M:%S")
+			print("Path: " + destlist_entry["path"])
+			print("Lnk Creation: " + lnk_dict["creation"])
+			print("Lnk Last Access: " + lnk_dict["last_access"])
+			print("Lnk Last Modify: " + lnk_dict["last_modify"])
+			print()
 
 if __name__ == "__main__":
 	main(sys.argv[1:])
