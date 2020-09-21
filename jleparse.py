@@ -1,6 +1,7 @@
 import struct
 from datetime import datetime, timezone
 import sys, getopt
+import lnkfile
 stop_int = -2
 free_space_int = -1
 auto_header = b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1'
@@ -345,27 +346,21 @@ def main(argv):
 		lnk_offset = 0
 		jle_file.seek(0)
 		lnk_bytes = jle_file.read()
+		f = open("test", "wb")
+		f.write(lnk_bytes)
+		f.close()
 		lnk_already_read = 0
-		for i in range(0,2):
-			lnk_offset = lnk_bytes.find(lnk_guid)
+		while lnk_exists:
+			lnk_offset = lnk_bytes.find(lnk_guid, lnk_offset + lnk_guid_size)
 			print(lnk_offset)
 			if(lnk_offset == -1):
 				lnk_exists = False
 				break
-			lnk_already_read += lnk_offset
-			jle_file.seek(lnk_offset)
-			lnk_bytes = jle_file.read()
-			lnk_dict = parse_lnk(lnk_bytes)
+			lnk_dict = parse_lnk(lnk_bytes[lnk_offset:])
 			print(lnk_dict)
-			jle_file.seek(lnk_offset + lnk_guid_size)
-			print(lnk_offset + lnk_guid_size)
-			lnk_bytes = jle_file.read()
-			# f = open("test", "wb")
-			# f.write(lnk_bytes)
-			# f.close()
-			# lnk_dict["creation"] = convert_timestamp(lnk_dict["creation"]).strftime("%m/%d/%Y %H:%M:%S")
-			# lnk_dict["last_access"] = convert_timestamp(lnk_dict["last_access"]).strftime("%m/%d/%Y %H:%M:%S")
-			# lnk_dict["last_modify"] = convert_timestamp(lnk_dict["last_modify"]).strftime("%m/%d/%Y %H:%M:%S")
+			lnk_dict["creation"] = convert_timestamp(lnk_dict["creation"]).strftime("%m/%d/%Y %H:%M:%S")
+			lnk_dict["last_access"] = convert_timestamp(lnk_dict["last_access"]).strftime("%m/%d/%Y %H:%M:%S")
+			lnk_dict["last_modify"] = convert_timestamp(lnk_dict["last_modify"]).strftime("%m/%d/%Y %H:%M:%S")
 
 if __name__ == "__main__":
 	main(sys.argv[1:])
