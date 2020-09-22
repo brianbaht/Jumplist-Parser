@@ -1,7 +1,7 @@
 import struct
 from datetime import datetime, timezone
 import sys, getopt
-import lnkfile
+import binascii
 stop_int = -2
 free_space_int = -1
 auto_header = b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1'
@@ -47,6 +47,11 @@ lnk_lastaccess_start = 36
 lnk_lastmodify_start = 44
 lnk_flag_start = 20
 lnk_flag_size = 4
+lnk_full_header_size = 76
+id_list_size_size = 2
+id_list_size_terminal_size = 2
+link_info_size_header_size = 4
+count_character_size = 2
 
 
 #Used to get number out of tuple
@@ -76,15 +81,66 @@ def get_data_run(start_sid, allocation_arr, sector_size, whole_file, root=b''):
 #parse LNK file header
 def parse_lnk(lnk_bytes):
 	header = int(unpack_bytes("q", lnk_bytes[:lnk_header_size]))
+	f = open("/Users/brianbahtiarian/Desktop/test", "wb")
+	f.write(lnk_bytes)
+	f.close()
 	lnk_dict = {}
+	count = 0
+	HasLinkTargetIDList = False
+	HasLinkInfo = False
+	HasName = False
+	HasRelativePath = False
+	HasWorkingDir = False
+	IsUnicode = False
 	if(header == lnk_magic):
 		lnk_dict["creation"] = unpack_bytes("q", lnk_bytes[lnk_creation_start:lnk_filetime_size + lnk_creation_start])
 		lnk_dict["last_access"] = unpack_bytes("q", lnk_bytes[lnk_lastaccess_start:lnk_filetime_size + lnk_lastaccess_start])
 		lnk_dict["last_modify"] = unpack_bytes("q", lnk_bytes[lnk_lastmodify_start:lnk_filetime_size + lnk_lastmodify_start])
-		lnk_dict["link_flags"] = unpack_bytes("I", lnk_bytes[])
+		lnk_flag_str = parse_lnk_flags(lnk_bytes[lnk_flag_start:lnk_flag_start + lnk_flag_size])
+		for c in lnk_flag_str:
+			if c == "1":
+				if count == 0:
+					HasLinkTargetIDList = True
+				elif count == 1:
+					HasLinkInfo = True
+				elif count == 2:
+					HasName = True
+				elif count == 3:
+					HasRelativePath = True
+				elif count == 4:
+					HasWorkingDir = True
+				elif count == 7:
+					IsUnicode = True
+				count += 1
+			else:
+				count += 1
+		print(IsUnicode)
+		start_byte = lnk_full_header_size
+		if(HasLinkTargetIDList):
+			start_byte += get_link_target_id_list_size(lnk_bytes, start_byte)
+		if(HasLinkInfo):
+			start_byte += get_link_info_size(lnk_bytes, start_bytes)
+		if(HasName):
+			parse_string_data(lnk_bytes, start_byte)
 		return lnk_dict
 	else:
 		return lnk_dict
+
+def parse_lnk_flags(lnk_flag):
+	lnk_flag = struct.unpack("<" + "L", lnk_flag)[0]
+	return '{0:<032b}'.format(lnk_flag)
+
+def get_link_target_id_list_size(lnk_bytes, start_byte):
+	id_list_size = lnk_bytes[start_byte:start_byte + id_list_size_size]
+	return unpack_bytes("H", id_list_size) + id_list_size_terminal_size
+
+def get_link_info_size(lnk_bytes, start_byte):
+	return unpack_bytes("I", lnk_bytes[start_byte:start_byte + link_info_size_header_size])
+
+def parse_string_data(lnk_bytes, start_byte):
+	num_chars = unpack_bytes("H",lnk_bytes[start_byte:start_byte + count_character_size])
+	print(lnk_bytes[start_byte + count_character_size:start_byte + count_character_size + num_chars])
+
 
 def convert_timestamp(timestamp):
 	unix_epoch = datetime(1970, 1, 1, tzinfo=timezone.utc)
@@ -350,18 +406,13 @@ def main(argv):
 		lnk_offset = 0
 		jle_file.seek(0)
 		lnk_bytes = jle_file.read()
-		f = open("test", "wb")
-		f.write(lnk_bytes)
-		f.close()
 		lnk_already_read = 0
 		while lnk_exists:
 			lnk_offset = lnk_bytes.find(lnk_guid, lnk_offset + lnk_guid_size)
-			print(lnk_offset)
 			if(lnk_offset == -1):
 				lnk_exists = False
 				break
 			lnk_dict = parse_lnk(lnk_bytes[lnk_offset:])
-			print(lnk_dict)
 			lnk_dict["creation"] = convert_timestamp(lnk_dict["creation"]).strftime("%m/%d/%Y %H:%M:%S")
 			lnk_dict["last_access"] = convert_timestamp(lnk_dict["last_access"]).strftime("%m/%d/%Y %H:%M:%S")
 			lnk_dict["last_modify"] = convert_timestamp(lnk_dict["last_modify"]).strftime("%m/%d/%Y %H:%M:%S")
