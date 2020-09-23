@@ -121,8 +121,10 @@ def parse_lnk(lnk_bytes):
 		if(HasLinkInfo):
 			start_byte += get_link_info_size(lnk_bytes, start_bytes)
 		if(HasName):
-			lnk_dict["name"], num_chars = parse_string_data(lnk_bytes, start_byte)
-			start_byte += num_chars
+			print(start_byte)
+			parse_string_data(lnk_bytes, start_byte)
+			#lnk_dict["name"], num_chars = parse_string_data(lnk_bytes, start_byte)
+			#start_byte += num_chars
 		return lnk_dict
 	else:
 		return lnk_dict
@@ -140,7 +142,8 @@ def get_link_info_size(lnk_bytes, start_byte):
 
 def parse_string_data(lnk_bytes, start_byte):
 	num_chars = unpack_bytes("H",lnk_bytes[start_byte:start_byte + count_character_size])
-	return lnk_bytes[start_byte + count_character_size + rand_bytes_size:start_byte + count_character_size + num_chars + rand_bytes_size].decode("ascii"), num_chars
+	print(lnk_bytes[start_byte + count_character_size + rand_bytes_size:start_byte + count_character_size + num_chars])
+	#return lnk_bytes[start_byte + count_character_size + rand_bytes_size:start_byte + count_character_size + num_chars + rand_bytes_size].decode("ascii"), num_chars
 
 
 def convert_timestamp(timestamp):
@@ -417,7 +420,7 @@ def main(argv):
 			lnk_dict["creation"] = convert_timestamp(lnk_dict["creation"]).strftime("%m/%d/%Y %H:%M:%S")
 			lnk_dict["last_access"] = convert_timestamp(lnk_dict["last_access"]).strftime("%m/%d/%Y %H:%M:%S")
 			lnk_dict["last_modify"] = convert_timestamp(lnk_dict["last_modify"]).strftime("%m/%d/%Y %H:%M:%S")
-		print("Path: " + lnk_dict["name"])
+		#print("Path: " + lnk_dict["name"])
 		print("Lnk Creation: " + lnk_dict["creation"])
 		print("Lnk Last Access: " + lnk_dict["last_access"])
 		print("Lnk Last Modify: " + lnk_dict["last_modify"])
