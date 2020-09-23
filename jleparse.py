@@ -52,7 +52,7 @@ id_list_size_size = 2
 id_list_size_terminal_size = 2
 link_info_size_header_size = 4
 count_character_size = 2
-
+rand_bytes_size = 43
 
 #Used to get number out of tuple
 def unpack_bytes(format, buf):
@@ -97,6 +97,7 @@ def parse_lnk(lnk_bytes):
 		lnk_dict["last_access"] = unpack_bytes("q", lnk_bytes[lnk_lastaccess_start:lnk_filetime_size + lnk_lastaccess_start])
 		lnk_dict["last_modify"] = unpack_bytes("q", lnk_bytes[lnk_lastmodify_start:lnk_filetime_size + lnk_lastmodify_start])
 		lnk_flag_str = parse_lnk_flags(lnk_bytes[lnk_flag_start:lnk_flag_start + lnk_flag_size])
+		print(lnk_flag_str)
 		for c in lnk_flag_str:
 			if c == "1":
 				if count == 0:
@@ -114,14 +115,14 @@ def parse_lnk(lnk_bytes):
 				count += 1
 			else:
 				count += 1
-		print(IsUnicode)
 		start_byte = lnk_full_header_size
 		if(HasLinkTargetIDList):
 			start_byte += get_link_target_id_list_size(lnk_bytes, start_byte)
 		if(HasLinkInfo):
 			start_byte += get_link_info_size(lnk_bytes, start_bytes)
 		if(HasName):
-			parse_string_data(lnk_bytes, start_byte)
+			lnk_dict["name"], num_chars = parse_string_data(lnk_bytes, start_byte)
+			start_byte += num_chars
 		return lnk_dict
 	else:
 		return lnk_dict
@@ -139,7 +140,7 @@ def get_link_info_size(lnk_bytes, start_byte):
 
 def parse_string_data(lnk_bytes, start_byte):
 	num_chars = unpack_bytes("H",lnk_bytes[start_byte:start_byte + count_character_size])
-	print(lnk_bytes[start_byte + count_character_size:start_byte + count_character_size + num_chars])
+	return lnk_bytes[start_byte + count_character_size + rand_bytes_size:start_byte + count_character_size + num_chars + rand_bytes_size].decode("ascii"), num_chars
 
 
 def convert_timestamp(timestamp):
@@ -416,6 +417,11 @@ def main(argv):
 			lnk_dict["creation"] = convert_timestamp(lnk_dict["creation"]).strftime("%m/%d/%Y %H:%M:%S")
 			lnk_dict["last_access"] = convert_timestamp(lnk_dict["last_access"]).strftime("%m/%d/%Y %H:%M:%S")
 			lnk_dict["last_modify"] = convert_timestamp(lnk_dict["last_modify"]).strftime("%m/%d/%Y %H:%M:%S")
+		print("Path: " + lnk_dict["name"])
+		print("Lnk Creation: " + lnk_dict["creation"])
+		print("Lnk Last Access: " + lnk_dict["last_access"])
+		print("Lnk Last Modify: " + lnk_dict["last_modify"])
+		print()
 
 if __name__ == "__main__":
 	main(sys.argv[1:])
