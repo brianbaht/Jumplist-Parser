@@ -97,7 +97,6 @@ def parse_lnk(lnk_bytes):
 		lnk_dict["last_access"] = unpack_bytes("q", lnk_bytes[lnk_lastaccess_start:lnk_filetime_size + lnk_lastaccess_start])
 		lnk_dict["last_modify"] = unpack_bytes("q", lnk_bytes[lnk_lastmodify_start:lnk_filetime_size + lnk_lastmodify_start])
 		lnk_flag_str = parse_lnk_flags(lnk_bytes[lnk_flag_start:lnk_flag_start + lnk_flag_size])
-		print(lnk_flag_str)
 		for c in lnk_flag_str:
 			if c == "1":
 				if count == 0:
@@ -119,9 +118,8 @@ def parse_lnk(lnk_bytes):
 		if(HasLinkTargetIDList):
 			start_byte += get_link_target_id_list_size(lnk_bytes, start_byte)
 		if(HasLinkInfo):
-			start_byte += get_link_info_size(lnk_bytes, start_bytes)
+			start_byte += get_link_info_size(lnk_bytes, start_byte)
 		if(HasName):
-			print(start_byte)
 			parse_string_data(lnk_bytes, start_byte)
 			#lnk_dict["name"], num_chars = parse_string_data(lnk_bytes, start_byte)
 			#start_byte += num_chars
@@ -131,7 +129,7 @@ def parse_lnk(lnk_bytes):
 
 def parse_lnk_flags(lnk_flag):
 	lnk_flag = struct.unpack("<" + "L", lnk_flag)[0]
-	return '{0:<032b}'.format(lnk_flag)
+	return '{0:>032b}'.format(lnk_flag) [::-1]
 
 def get_link_target_id_list_size(lnk_bytes, start_byte):
 	id_list_size = lnk_bytes[start_byte:start_byte + id_list_size_size]
@@ -393,13 +391,16 @@ def main(argv):
 				else:
 					entry_data = get_data_run(entry["sid"], ssat_arr, short_sector_size, whole_file, root_data)
 				lnk_dict = parse_lnk(entry_data)
-				lnk_dict["creation"] = convert_timestamp(lnk_dict["creation"]).strftime("%m/%d/%Y %H:%M:%S")
-				lnk_dict["last_access"] = convert_timestamp(lnk_dict["last_access"]).strftime("%m/%d/%Y %H:%M:%S")
-				lnk_dict["last_modify"] = convert_timestamp(lnk_dict["last_modify"]).strftime("%m/%d/%Y %H:%M:%S")
-				print("Path: " + destlist_entry["path"])
-				print("Lnk Creation: " + lnk_dict["creation"])
-				print("Lnk Last Access: " + lnk_dict["last_access"])
-				print("Lnk Last Modify: " + lnk_dict["last_modify"])
+				if(not lnk_dict):
+					print("The destlist entry could not be parsed")
+				else:
+					lnk_dict["creation"] = convert_timestamp(lnk_dict["creation"]).strftime("%m/%d/%Y %H:%M:%S")
+					lnk_dict["last_access"] = convert_timestamp(lnk_dict["last_access"]).strftime("%m/%d/%Y %H:%M:%S")
+					lnk_dict["last_modify"] = convert_timestamp(lnk_dict["last_modify"]).strftime("%m/%d/%Y %H:%M:%S")
+					print("Path: " + destlist_entry["path"])
+					print("Lnk Creation: " + lnk_dict["creation"])
+					print("Lnk Last Access: " + lnk_dict["last_access"])
+					print("Lnk Last Modify: " + lnk_dict["last_modify"])
 				print()
 	elif(jle_type == "c"):
 		file_sig = header[0:36]
