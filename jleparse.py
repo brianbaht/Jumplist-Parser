@@ -81,9 +81,6 @@ def get_data_run(start_sid, allocation_arr, sector_size, whole_file, root=b''):
 #parse LNK file header
 def parse_lnk(lnk_bytes):
 	header = int(unpack_bytes("q", lnk_bytes[:lnk_header_size]))
-	f = open("/Users/brianbahtiarian/Desktop/test", "wb")
-	f.write(lnk_bytes)
-	f.close()
 	lnk_dict = {}
 	count = 0
 	HasLinkTargetIDList = False
